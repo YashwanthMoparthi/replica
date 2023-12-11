@@ -23,7 +23,11 @@ jobs:
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  
+          python-version: '3.10'
+
+      - name: Modified Files
+        id: filenames
+        uses: jitterbit/get-changed-files@v1    
 
       - name: Install Python packages
         run: pip install -r requirements.txt
@@ -51,6 +55,33 @@ jobs:
 
       - name: Deploy Snowpark apps
         if: ${{ github.ref == 'refs/heads/dev' && github.event.pull_request.merged == true }}
+        env:
+          FILES: ${{ steps.filenames.outputs.all }}
+        run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
+
+      - name: Configure snowcli
+        if: ${{ github.ref == 'refs/heads/test' && github.event.pull_request.merged == true }}
+        env:
+          SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_TEST }}
+          SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_TEST }}
+          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_TEST  }}
+          SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_TEST  }}
+          SNOWSQL_WAREHOUSE: ${{ secrets.SNOWSQL_WAREHOUSE_TEST }}
+          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_TEST  }}
+          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_TEST  }}
+        run: |
+          cd $GITHUB_WORKSPACE
+          echo "[connections.main]" > config
+          echo "accountname = $SNOWSQL_ACCOUNT " >> config
+          echo "username = $SNOWSQL_USER " >> config
+          echo "password = $SNOWSQL_PWD " >> config
+          echo "rolename = $SNOWSQL_ROLE " >> config
+          echo "warehousename = $SNOWSQL_WAREHOUSE " >> config
+          echo "dbname = $SNOWSQL_DATABASE " >> config
+          echo "schemaname = $SNOWSQL_SCHEMA " >> config
+
+      - name: Deploy Snowpark apps
+        if: ${{ github.ref == 'refs/heads/test' && github.event.pull_request.merged == true }}
         env:
           FILES: ${{ steps.filenames.outputs.all }}
         run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
