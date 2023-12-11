@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -82,7 +81,7 @@ jobs:
           FILES: ${{ steps.filenames.outputs.all }}
         run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
 
-         - name: Configure snowcli
+      - name: Configure snowcli
         if: ${{ github.ref == 'refs/heads/release' && github.event.pull_request.merged == true }}
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_RELEASE }}
