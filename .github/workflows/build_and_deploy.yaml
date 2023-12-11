@@ -1,6 +1,5 @@
 name: Deploy Snowpark Apps
 
-# Controls when the action will run. 
 on:
   pull_request:
     branches:
@@ -8,8 +7,7 @@ on:
     types:
       - closed
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+workflow_dispatch:
 
 jobs:
   DEV:
@@ -22,7 +20,7 @@ jobs:
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  
+          python-version: '3.10'
 
       - name: Install Python packages
         run: pip install -r requirements.txt
@@ -31,11 +29,11 @@ jobs:
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_DEV }}
           SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_DEV }}
-          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_DEV  }}
-          SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_DEV  }}
-          SNOWSQL_WAREHOUSE: ${{ secrets.SNOWSQL_WAREHOUSE_DEV  }}
-          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_DEV  }}
-          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_DEV  }}
+          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_DEV }}
+          SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_DEV }}
+          SNOWSQL_WAREHOUSE: ${{ secrets.SNOWSQL_WAREHOUSE_DEV }}
+          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_DEV }}
+          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_DEV }}
         run: |
           cd $GITHUB_WORKSPACE
           echo "[connections.main]" > config
@@ -47,12 +45,17 @@ jobs:
           echo "dbname = $SNOWSQL_DATABASE " >> config
           echo "schemaname = $SNOWSQL_SCHEMA " >> config
 
+      - name: Send approval email for DEV
+        if: always()
+        run: |
+          echo "Subject: Approval Request for DEV" | sendmail ${{ secrets.DEV_EMAIL }}
+		  
       - name: Deploy Snowpark apps
         env:
           FILES: ${{ steps.filenames.outputs.all }}
         run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
 
-  Test:
+  TEST:
     needs: DEV
     runs-on: ubuntu-latest
 
@@ -63,7 +66,7 @@ jobs:
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  
+          python-version: '3.10'
 
       - name: Install Python packages
         run: pip install -r requirements.txt
@@ -72,11 +75,11 @@ jobs:
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_TEST }}
           SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_TEST }}
-          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_TEST  }}
-          SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_TEST  }}
+          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_TEST }}
+          SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_TEST }}
           SNOWSQL_WAREHOUSE: ${{ secrets.SNOWSQL_WAREHOUSE_TEST }}
-          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_TEST  }}
-          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_TEST  }}
+          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_TEST }}
+          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_TEST }}
         run: |
           cd $GITHUB_WORKSPACE
           echo "[connections.main]" > config
@@ -88,6 +91,11 @@ jobs:
           echo "dbname = $SNOWSQL_DATABASE " >> config
           echo "schemaname = $SNOWSQL_SCHEMA " >> config
 
+      - name: Send approval email for TEST
+        if: always()
+        run: |
+          echo "Subject: Approval Request for TEST" | sendmail ${{ secrets.TEST_EMAIL }}
+		  
       - name: Deploy Snowpark apps
         env:
           FILES: ${{ steps.filenames.outputs.all }}
@@ -104,7 +112,7 @@ jobs:
       - name: Setup Python 3.10
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  
+          python-version: '3.10'
 
       - name: Install Python packages
         run: pip install -r requirements.txt
@@ -113,11 +121,11 @@ jobs:
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_RELEASE }}
           SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_RELEASE }}
-          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_RELEASE  }}
+          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_RELEASE }}
           SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_RELEASE }}
           SNOWSQL_WAREHOUSE: ${{ secrets.SNOWSQL_WAREHOUSE_RELEASE }}
-          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_RELEASE  }}
-          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_RELEASE  }}
+          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_RELEASE }}
+          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_RELEASE }}
         run: |
           cd $GITHUB_WORKSPACE
           echo "[connections.main]" > config
@@ -129,6 +137,11 @@ jobs:
           echo "dbname = $SNOWSQL_DATABASE " >> config
           echo "schemaname = $SNOWSQL_SCHEMA " >> config
 
+      - name: Send approval email for RELEASE
+        if: always()
+        run: |
+          echo "Subject: Approval Request for RELEASE" | sendmail ${{ secrets.RELEASE_EMAIL }}
+		  
       - name: Deploy Snowpark apps
         env:
           FILES: ${{ steps.filenames.outputs.all }}
