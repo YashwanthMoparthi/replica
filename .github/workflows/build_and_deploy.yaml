@@ -1,0 +1,60 @@
+name: Deploy Snowpark Apps
+
+# Controls when the action will run. 
+on:
+  pull_request:
+    branches:
+      - dev
+    types:
+      - closed
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Modified Files
+        id: filenames
+        uses: jitterbit/get-changed-files@v1    
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Configure snowcli
+        if: ${{ github.ref == 'refs/heads/dev' && github.event.pull_request.merged == true }}
+        env:
+          SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_DEV }}
+          SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_DEV }}
+          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_DEV  }}
+          SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_DEV  }}
+          SNOWSQL_WAREHOUSE: ${{ secrets.SNOWSQL_WAREHOUSE_DEV  }}
+          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_DEV  }}
+          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_DEV  }}
+        run: |
+          cd $GITHUB_WORKSPACE
+          echo "[connections.main]" > config
+          echo "accountname = $SNOWSQL_ACCOUNT " >> config
+          echo "username = $SNOWSQL_USER " >> config
+          echo "password = $SNOWSQL_PWD " >> config
+          echo "rolename = $SNOWSQL_ROLE " >> config
+          echo "warehousename = $SNOWSQL_WAREHOUSE " >> config
+          echo "dbname = $SNOWSQL_DATABASE " >> config
+          echo "schemaname = $SNOWSQL_SCHEMA " >> config
+
+      - name: Deploy Snowpark apps
+        if: ${{ github.ref == 'refs/heads/dev' && github.event.pull_request.merged == true }}
+        env:
+          FILES: ${{ steps.filenames.outputs.all }}
+        run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
