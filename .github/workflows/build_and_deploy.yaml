@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy_dev:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,7 +28,6 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Configure snowcli
-        if: ${{ github.ref == 'refs/heads/dev' && github.event.pull_request.merged == true }}
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_DEV }}
           SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_DEV }}
@@ -49,13 +48,27 @@ jobs:
           echo "schemaname = $SNOWSQL_SCHEMA " >> config
 
       - name: Deploy Snowpark apps
-        if: ${{ github.ref == 'refs/heads/dev' && github.event.pull_request.merged == true }}
         env:
           FILES: ${{ steps.filenames.outputs.all }}
         run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
 
+  deploy_test:
+    needs: deploy_dev
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'  
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
       - name: Configure snowcli
-        if: ${{ github.ref == 'refs/heads/test' && github.event.pull_request.merged == true }}
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_TEST }}
           SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_TEST }}
@@ -76,13 +89,27 @@ jobs:
           echo "schemaname = $SNOWSQL_SCHEMA " >> config
 
       - name: Deploy Snowpark apps
-        if: ${{ github.ref == 'refs/heads/test' && github.event.pull_request.merged == true }}
         env:
           FILES: ${{ steps.filenames.outputs.all }}
         run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
 
+  deploy_release:
+    needs: deploy_test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'  
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
       - name: Configure snowcli
-        if: ${{ github.ref == 'refs/heads/release' && github.event.pull_request.merged == true }}
         env:
           SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_RELEASE }}
           SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_RELEASE }}
@@ -103,7 +130,6 @@ jobs:
           echo "schemaname = $SNOWSQL_SCHEMA " >> config
 
       - name: Deploy Snowpark apps
-        if: ${{ github.ref == 'refs/heads/release' && github.event.pull_request.merged == true }}
         env:
           FILES: ${{ steps.filenames.outputs.all }}
         run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
