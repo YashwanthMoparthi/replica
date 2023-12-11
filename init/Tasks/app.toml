@@ -1,0 +1,17 @@
+snowsql_config_path = "/Users/raymond.canchola/Documents/ServiceNow/FeatureStore/config"
+snowsql_connection_name = "main"
+
+[default]
+input_parameters = "()"
+return_type = "string"
+file = "app.zip"
+name = "SP_INIT"
+handler = "app.main"
+execute_as_caller = true
+
+[dev]
+database = "FEATURESTORE_DB"
+schema = "FEATURESTORE_SCHEMA"
+warehouse = "FEATURESTORE_WH"
+role = "FEATURESTORE_ROLE"
+overwrite = true

@@ -1,0 +1,14 @@
+name: servicenow
+channels:
+  - https://repo.anaconda.com/pkgs/snowflake
+  - nodefaults
+dependencies:
+  - python=3.10
+  - snowflake-snowpark-python
+  - pip
+  - openssl=1.1.1
+  - pip:
+    - snowflake-cli-labs==0.2.9
+    - black
+    - pylint
+    - flake8
