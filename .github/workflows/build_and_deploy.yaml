@@ -81,3 +81,30 @@ jobs:
         env:
           FILES: ${{ steps.filenames.outputs.all }}
         run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
+
+         - name: Configure snowcli
+        if: ${{ github.ref == 'refs/heads/release' && github.event.pull_request.merged == true }}
+        env:
+          SNOWSQL_ACCOUNT: ${{ secrets.SNOWSQL_ACCOUNT_RELEASE }}
+          SNOWSQL_USER: ${{ secrets.SNOWSQL_USER_RELEASE }}
+          SNOWSQL_PWD: ${{ secrets.SNOWSQL_PWD_RELEASE  }}
+          SNOWSQL_ROLE: ${{ secrets.SNOWSQL_ROLE_RELEASE }}
+          SNOWSQL_WAREHOUSE: ${{ secrets.SNOWSQL_WAREHOUSE_RELEASE }}
+          SNOWSQL_DATABASE: ${{ secrets.SNOWSQL_DATABASE_RELEASE  }}
+          SNOWSQL_SCHEMA: ${{ secrets.SNOWSQL_SCHEMA_RELEASE  }}
+        run: |
+          cd $GITHUB_WORKSPACE
+          echo "[connections.main]" > config
+          echo "accountname = $SNOWSQL_ACCOUNT " >> config
+          echo "username = $SNOWSQL_USER " >> config
+          echo "password = $SNOWSQL_PWD " >> config
+          echo "rolename = $SNOWSQL_ROLE " >> config
+          echo "warehousename = $SNOWSQL_WAREHOUSE " >> config
+          echo "dbname = $SNOWSQL_DATABASE " >> config
+          echo "schemaname = $SNOWSQL_SCHEMA " >> config
+
+      - name: Deploy Snowpark apps
+        if: ${{ github.ref == 'refs/heads/release' && github.event.pull_request.merged == true }}
+        env:
+          FILES: ${{ steps.filenames.outputs.all }}
+        run: python command_center_deploy.py --root_directory=$GITHUB_WORKSPACE --files_list="$FILES"
