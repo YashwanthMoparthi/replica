@@ -49,7 +49,7 @@ jobs:
         if: always()
         run: |
           echo "Subject: Approval Request for DEV" | sendmail ${{ secrets.DEV_EMAIL }}
-		  
+	  
       - name: Deploy Snowpark apps
         env:
           FILES: ${{ steps.filenames.outputs.all }}
